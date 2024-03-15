@@ -1,9 +1,8 @@
 openapi: 3.0.3
 info:
-  title: Choreo Sample - Book List - Nodejs REST API Service
+  title: Nutrients Calculator Web App - REST API Service
   description: >-
-    This is a sample API specification for a simple reading list application with in-memory cache
-    written in Nodejs
+    This is a REST API service for the Nutrients Calculator Web App. This service provides the ability to calculate the nutrients of a food item based on the user's input.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -14,16 +13,16 @@ externalDocs:
 servers:
   - url: http://localhost:8080
 tags:
-  - name: books
-    description: In-memory book list cache API
+  - name: calculations
+    description: Endpoints for nutrient calculations
 paths:
-  /books:
-    summary: List all books
+  /calculations:
+    summary: List all calculations
     get:
-      summary: List all books
-      operationId: ListAllBooks
+      summary: List all calculations
+      operationId: ListAllCalculations
       tags:
-        - books
+        - calculations
       responses:
         "200":
           description: Successful operation
@@ -32,32 +31,32 @@ paths:
               schema:
                 $ref: "#/components/schemas/StringArray"
     post:
-      summary: Insert a new book
-      operationId: SetNewBook
+      summary: Insert a new calculation
+      operationId: SetNewCalculation
       responses:
         "200":
           description: Successful operation
         "400":
           description: Invalid request body
       tags:
-        - books
+        - calculations
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/KeyValue"
 
-  /books/{uuid}:
-    summary: Get book by UUID
+  /calculations/{uuid}:
+    summary: Get calculation by UUID
     get:
       tags:
-        - books
-      summary: Get book by UUID
-      operationId: GetBookByUUID
+        - calculations
+      summary: Get calculation by UUID
+      operationId: GetCalculationByUUID
       parameters:
         - name: uuid
           in: path
-          description: UUID of book to return
+          description: UUID of calculation to return
           required: true
           schema:
             type: string
@@ -72,14 +71,14 @@ paths:
           description: UUID not found
     delete:
       tags:
-        - books
-      summary: Delete book by UUID
-      description: Deletes a single book based on the UUID supplied
-      operationId: DeleteBookByUUID
+        - calculations
+      summary: Delete calculation by UUID
+      description: Deletes a single calculation based on the UUID supplied
+      operationId: DeleteCalculationByUUID
       parameters:
         - name: uuid
           in: path
-          description: UUID of book to delete
+          description: UUID of calculation to delete
           required: true
           schema:
             type: string
@@ -87,30 +86,7 @@ paths:
         "200":
           description: Successful operation
         "404":
-          description: ISBN not found
-    put:
-      tags:
-        - books
-      summary: Update book status by UUID
-      description: Updates the status of the book based on the UUID supplied
-      operationId: UpdateBookStatusByUUID
-      parameters:
-        - name: uuid
-          in: path
-          description: UUID of book to update
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Successful operation
-        "404":
-          description: UUID not found
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Status"
+          description: Calculation not found
   /healthz:
     summary: Healthcheck endpoint
     get:
