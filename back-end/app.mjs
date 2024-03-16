@@ -5,9 +5,10 @@ import bcrypt from "bcrypt";
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import usersCache from './usersCache.mjs';
+import cors from 'cors';
 
 dotenv.config();
-const ENV = process.env.NODE_ENV || "prd";
+const ENV = process.env.ENV || "prd";
 const JWT_SECRET = process.env.JWT_SECRET || "e28e3a4b-e748-4710-a93c-d01e29b0b641";
 
 const corsOptions ={
@@ -19,7 +20,7 @@ const corsOptions ={
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-if (ENV === 'dev') app.use(express.urlencoded({ extended: true }));
+if (ENV === 'dev') app.use(cors(corsOptions));
 
 // register
 app.post("/reading-list/users", async (req, res) => {
