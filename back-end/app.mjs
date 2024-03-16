@@ -7,7 +7,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // add a book - request body should contain a title, status and an author
-app.post("/books", (req, res) => {
+app.post("/api", (req, res) => {
   const { title, author, status } = req.body;
   const uuid = uuidv4();
   if (!(status === "read" || status === "to_read" || status === "reading")) {
@@ -45,7 +45,7 @@ app.put("/reading-list/books/:uuid", (req, res) => {
 });
 
 // get the list of books
-app.get("/books", (_, res) => {
+app.get("/api", (_, res) => {
   const keys = cache.keys();
   const allData = {};
   for (const key of keys) {

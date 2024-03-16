@@ -17,7 +17,7 @@ tags:
   - name: books
     description: In-memory book list cache API
 paths:
-  /:
+  /api:
     summary: List all books
     get:
       summary: List all books
