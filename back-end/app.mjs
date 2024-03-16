@@ -24,7 +24,7 @@ app.use(express.json());
 if (ENV === 'dev') app.use(express.urlencoded({ extended: true }));
 
 // add a user
-app.post("/app/users/register", async (req, res) => {
+app.post("/users/register", async (req, res) => {
   const { email, password } = req.body;
   const uuid = uuidv4();
   if (!email || !password) {
