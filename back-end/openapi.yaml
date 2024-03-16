@@ -16,7 +16,7 @@ tags:
   - name: calculations
     description: Endpoints for nutrient calculations
 paths:
-  /calculations:
+  /books:
     summary: List all calculations
     get:
       summary: List all calculations
