@@ -6,98 +6,54 @@ import { Book } from "./api/books/types/book";
 import groupBy from "lodash/groupBy";
 import AddItem from "./components/modal/fragments/add-item";
 import { deleteBooks } from "./api/books/delete-books";
-import { Dictionary } from "lodash";
+import { Dictionary, set } from "lodash";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { toast } from 'react-toastify';
-import { use } from 'chai';
 
 /** User APIs */
-import { registerUser } from './api/users';
+import { registerUser, loginUser } from './api/users';
 
 /** MUI Comps */
-import { Button, TextField, InputAdornment, IconButton } from '@mui/material';
+import { Button, TextField, InputAdornment, IconButton, Select, MenuItem, Paper } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+
+/** Utils */
+import { foodItems } from './utility';
 
 export function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
 export default function App() {
-  const [readList, setReadList] = useState<Dictionary<Book[]> | null>(null);
-  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+
+  /** Common */
   const [isLoading, setIsLoading] = useState(false);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [signedIn, setSignedIn] = useState(false);
-  const [user, setUser] = useState<any>(null);
 
   /** Register */
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
-  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+
+  /** Login */
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  /** User */
+  const [signedIn, setSignedIn] = useState(false);
+  const [email, setEmail] = useState('');
+
+  /** Calculator */
+  const [foodItem, setFoodItem] = useState('');
+  const [items, setItems] = useState([]);
 
   useEffect(() => {
-    if (Cookies.get('userinfo')) {
-      // We are here after a login
-      const userInfoCookie = Cookies.get('userinfo')
-      sessionStorage.setItem("userInfo", userInfoCookie);
-      Cookies.remove('userinfo');
-      var userInfo = JSON.parse(atob(userInfoCookie));
+    const user = Cookies.get('user');
+    if (user) {
+      const { email, token } = JSON.parse(user);
+      setEmail(email);
+      setToken(token);
       setSignedIn(true);
-      setUser(userInfo);
-    } else if (sessionStorage.getItem("userInfo")) {
-      // We have already logged in
-      var userInfo = JSON.parse(atob(sessionStorage.getItem("userInfo")!));
-      setSignedIn(true);
-      setUser(userInfo);
-    } else {
-      console.log("User is not signed in");
-    }
-    //setSignedIn(true);
-    setIsAuthLoading(false);
-  }, []);
-
-  useEffect(() => {
-    // Handle errors from Managed Authentication
-    const errorCode = new URLSearchParams(window.location.search).get('code');
-    const errorMessage = new URLSearchParams(window.location.search).get('message');
-    if (errorCode) {
-      toast.error(<>
-        <p className="text-[16px] font-bold text-slate-800">Something went wrong !</p>
-        <p className="text-[13px] text-slate-400 mt-1">Error Code : {errorCode}<br />Error Description: {errorMessage}</p>
-      </>);    
     }
   }, []);
-
-  useEffect(() => {
-    getReadingList();
-  }, [signedIn]);
-
-  async function getReadingList() {
-    if (signedIn) {
-      setIsLoading(true);
-      getBooks()
-        .then((res) => {
-          const grouped = groupBy(res.data, (item) => item.status);
-          setReadList(grouped);
-          setIsLoading(false);
-        })
-        .catch((e) => {
-          console.log(e);
-        });
-    }
-  }
-
-  useEffect(() => {
-    if (!isAddItemOpen) {
-      getReadingList();
-    }
-  }, [isAddItemOpen]);
-
-  const handleDelete = async (id: string) => {
-    setIsLoading(true);
-    await deleteBooks(id);
-    getReadingList();
-    setIsLoading(false);
-  };
 
   const handleRegister = async () => {
     setIsLoading(true);
@@ -112,58 +68,125 @@ export default function App() {
     setIsLoading(false);
   }
 
-  if (isAuthLoading) {
+  const handleLogin = async () => {
+    setIsLoading(true);
+    const resp = await loginUser(loginEmail, loginPassword);
+    const { email, token } = resp;
+    if (email && token) {
+      toast.success('User logged in successfully');
+      Cookies.set('user', JSON.stringify({ email, token }));
+      setSignedIn(true);
+      setEmail(email);
+      setToken(token);
+    } else {
+      toast.error('User login failed');
+    }
+    setLoginEmail('');
+    setLoginPassword('');
+    setIsLoading(false);
+  }
+
+  const handleGuestLogin = async () => {
+    setIsLoading(true);
+    setEmail('guest');
+    setSignedIn(true);
+    setIsLoading(false);
+  }
+
+  const handleLogout = async () => {
+    setIsLoading(true);
+    setEmail('');
+    setSignedIn(false);
+    Cookies.remove('user');
+    setFoodItem('');
+    setItems([]);
+    setIsLoading(false);
+  }
+
+  const addItemToList = () => {
+    if(foodItem) setItems([...items, foodItem]);
+    setFoodItem('');
+  }
+
+  const protein = items.reduce((acc, item) => acc + foodItems.find((food) => food.key === item).protein, 0);
+  const carbs = items.reduce((acc, item) => acc + foodItems.find((food) => food.key === item).carbs, 0);
+  const fat = items.reduce((acc, item) => acc + foodItems.find((food) => food.key === item).fat, 0);
+
+  if (isLoading) {
     return <div className="animate-spin h-5 w-5 text-white">.</div>;
   }
 
-  if (false) {
+  if (!signedIn) {
     return (
-      <div className='flex flex-row gap-4'>
+      <div className='flex flex-col gap-4 border-2 p-6'>
 
-        {/* Register */}
-        <div className="flex flex-col gap-2 bg-slate-100 p-4 rounded-md">
-          <TextField
-            required
-            id="outlined-required"
-            label="Email"
-            value={registerEmail}
-            onChange={(e) => setRegisterEmail(e.target.value)}
-          />
-          <TextField
-            label="Password"
-            required
-            type={showRegisterPassword ? 'text' : 'password'} 
-            value={registerPassword}
-            onChange={(event) => setRegisterPassword(event.target.value)}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                </InputAdornment>
-              ),
-            }}
-          />
-          <Button variant="contained" onClick={handleRegister}>
-            Register 
-          </Button>
+        <h1 className='font-bold text-3xl text-center text-white'>Macro Nutrients Calculator App</h1>
+
+        <div className='flex flex-row gap-4 p-4 '>
+
+          {/* Register */}
+          <div className="flex flex-col gap-2 bg-slate-100 p-4 rounded-md">
+            <p className='text-center font-bold'>Register</p>
+            <TextField
+              required
+              id="outlined-required"
+              label="Email"
+              value={registerEmail}
+              onChange={(e) => setRegisterEmail(e.target.value)}
+            />
+            <TextField
+              label="Password"
+              required
+              type="password"
+              value={registerPassword}
+              onChange={(event) => setRegisterPassword(event.target.value)}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Button variant="contained" onClick={handleRegister}>
+              Register 
+            </Button>
+          </div>
+
+          {/* Login */}
+          <div className="flex flex-col gap-2 bg-slate-100 p-4 rounded-md">
+            <p className='text-center font-bold'>Login</p>
+            <TextField
+              required
+              id="outlined-required"
+              label="Email"
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+            />
+            <TextField
+              label="Password"
+              required
+              type="password"
+              value={loginPassword}
+              onChange={(event) => setLoginPassword(event.target.value)}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Button variant="contained" onClick={handleLogin}>
+              Login
+            </Button>
+          </div>
+          
         </div>
-        <button
-          className="float-right bg-black bg-opacity-20 p-2 rounded-md text-sm my-3 font-medium text-white"
-          onClick={() => { window.location.href = "/auth/login" }}
-        >
-          Login
-        </button>
-        <button
-          className="float-right bg-black bg-opacity-20 p-2 rounded-md text-sm my-3 font-medium text-white"
-          onClick={() => { window.location.href = "/auth/login" }}
-        >
-          Register
-        </button>
-        <button
-          className="float-right bg-black bg-opacity-20 p-2 rounded-md text-sm my-3 font-medium text-white"
-          onClick={() => { window.location.href = "/auth/login" }}
-        >
+
+        {/* Login as a guest */}
+        <Button variant="contained" color="success" onClick={handleGuestLogin}>
           Login as a Guest
-        </button>
+        </Button>
+
       </div>
       
     );
@@ -171,127 +194,72 @@ export default function App() {
 
   return (
     <div className="header-2 w-screen h-screen overflow-hidden">
-      <nav className="bg-white py-2 md:py-2">
-        <div className="container px-4 mx-auto md:flex md:items-center">
-          <div className="flex justify-between items-center">
-            {user && (
-              <a href="#" className="font-bold text-xl text-[#36d1dc]">
-                {user?.org_name}
-              </a>
-            )}
-            <button
-              className="border border-solid border-gray-600 px-3 py-1 rounded text-gray-600 opacity-50 hover:opacity-75 md:hidden"
-              id="navbar-toggle"
-            >
-              <i className="fas fa-bars"></i>
-            </button>
-          </div>
 
-          <div
-            className="hidden md:flex flex-col md:flex-row md:ml-auto mt-3 md:mt-0"
-            id="navbar-collapse"
-          >
-            <button
-              className="float-right bg-[#5b86e5] p-2 rounded-md text-sm my-3 font-medium text-white"
-              onClick={() => {
-                sessionStorage.removeItem("userInfo");
-                window.location.href = `/auth/logout?session_hint=${Cookies.get('session_hint')}`;
-              }}
-            >
-              Logout
-            </button>
-          </div>
+      {/* Navbar */}
+      <nav className="flex flex-row justify-between bg-slate-100 px-8 py-4">
+        <div className="flex justify-between items-center">
+          <p className='text-lg'>Hello <span className='font-bold text-2xl'>{email}</span></p>
         </div>
+        <Button variant="contained" color="error" onClick={handleLogout}>
+          Logout 
+        </Button>
       </nav>
 
-      <div className="py-3 md:py-6">
-        <div className="container px-4 mx-auto flex justify-center">
-          <div className="w-full max-w-lg px-2 py-16 sm:px-0 mb-20">
-            <div className="flex justify-between">
-              <p className="text-4xl text-white mb-3 font-bold">Reading List Test</p>
-              <div className="container w-auto">
-                <button
-                  className="float-right bg-black bg-opacity-20 p-2 rounded-md text-sm my-3 font-medium text-white h-10"
-                  onClick={() => setIsAddItemOpen(true)}
-                >
-                  + Add New
-                </button>
-                <button
-                  className="float-right bg-black bg-opacity-20 p-2 rounded-md text-sm my-3 font-medium text-white w-10 h-10 mr-1"
-                  onClick={() => getReadingList()}
-                >
-                  <ArrowPathIcon />
-                </button>
-              </div>
-            </div>
-            {readList && (
-              <Tab.Group>
-                <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
-                  {Object.keys(readList).map((val) => (
-                    <Tab
-                      key={val}
-                      className={({ selected }) =>
-                        classNames(
-                          "w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-blue-700",
-                          "ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2",
-                          selected
-                            ? "bg-white shadow"
-                            : "text-blue-100 hover:bg-white/[0.12] hover:text-white"
-                        )
-                      }
-                    >
-                      {val}
-                    </Tab>
-                  ))}
-                </Tab.List>
-                <Tab.Panels className="mt-2">
-                  {Object.values(readList).map((books: Book[], idx) => (
-                    <Tab.Panel
-                      key={idx}
-                      className={
-                        isLoading
-                          ? classNames(
-                            "rounded-xl bg-white p-3 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2 animate-pulse"
-                          )
-                          : classNames(
-                            "rounded-xl bg-white p-3 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2"
-                          )
-                      }
-                    >
-                      <ul>
-                        {books.map((book) => (
-                          <div className="flex justify-between">
-                            <li
-                              key={book.uuid}
-                              className="relative rounded-md p-3"
-                            >
-                              <h3 className="text-sm font-medium leading-5">
-                                {book.title}
-                              </h3>
+      {/* Calculator */}
+      <div className="flex flex-col gap-2 p-4 items-center">
 
-                              <ul className="mt-1 flex space-x-1 text-xs font-normal leading-4 text-gray-500">
-                                <li>{book.author}</li>
-                                <li>&middot;</li>
-                              </ul>
-                            </li>
-                            <button
-                              className="float-right bg-red-500 text-white rounded-md self-center text-xs p-2 mr-2"
-                              onClick={() => handleDelete(book.uuid!)}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        ))}
-                      </ul>
-                    </Tab.Panel>
-                  ))}
-                </Tab.Panels>
-              </Tab.Group>
-            )}
-            <AddItem isOpen={isAddItemOpen} setIsOpen={setIsAddItemOpen} />
-          </div>
+        <div className='flex flex-col gap-2 border-2 p-6 w-2/3'>
+          <p className='text-lg text-center text-white'>Select Food Item</p>
+          <Select
+            id="item-select"
+            value={foodItem}
+            label="Select food item"
+            onChange={(e) => setFoodItem(e.target.value)}
+          >
+            {foodItems.map((item, index) => (
+              <MenuItem key={index} value={item.key}>{item.key}</MenuItem>
+            ))}
+          </Select>
+          <Button variant="contained" color="success" onClick={addItemToList}>
+            Add Item
+          </Button>
         </div>
+
+        {/* Selected Items */}
+        {items.length > 0 && (
+          <div className='flex flex-col gap-2 border-2 p-6 w-2/3'>
+            <p className='text-lg text-center text-white'>Selected Items</p>
+            <ul className='flex flex-row gap-2'>
+              {items.map((item, index) => (
+                <div className='flex flex-row gap-2 bg-slate-100 text-center px-4 py-2 rounded-lg'>
+                  <li key={index}>{item}</li>
+                  <CloseIcon color="error" onClick={() => setItems(items.filter((i) => i !== item))} />
+                </div>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Macro Nutrients */}
+        {items.length > 0 && (
+          <div className='flex flex-row justify-center gap-2 border-2 p-6 w-2/3 bg-blue-300'>
+            <Paper className='flex flex-col gap-2 p-4'>
+              <p className='text-center text-black text-2xl'>Protein</p>
+              <p className='text-center text-black text-4xl font-bold'>{protein}<span className='text-2xl'>g</span></p>
+            </Paper>
+            <Paper className='flex flex-col gap-2 p-4'>
+              <p className='text-center text-black text-2xl'>Carbs</p>
+              <p className='text-center text-black text-4xl font-bold'>{carbs}<span className='text-2xl'>g</span></p>
+            </Paper>
+            <Paper className='flex flex-col gap-2 p-4'>
+              <p className='text-center text-black text-2xl'>Fat</p>
+              <p className='text-center text-black text-4xl font-bold'>{fat}<span className='text-2xl'>g</span></p>
+            </Paper>
+          </div>
+        )}
+
       </div>
+
     </div>
   );
 }
