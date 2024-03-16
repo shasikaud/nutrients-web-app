@@ -47,6 +47,40 @@ paths:
             schema:
               $ref: "#/components/schemas/KeyValue"
 
+  /users:
+    post:
+      summary: Insert a new user
+      operationId: SetNewUser
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: Invalid request body
+      tags:
+        - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+
+  /users/login:
+    post:
+      summary: Login user
+      operationId: LoginUser
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: Invalid request body
+      tags:
+        - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+
   /books/{uuid}:
     summary: Get book by UUID
     get:
@@ -154,3 +188,12 @@ components:
       type: array
       items:
         type: string
+    User:
+      type: object
+      properties:
+        email:
+          type: string
+          example: "my-email"
+        password:
+          type: string
+          example: "my-password"
