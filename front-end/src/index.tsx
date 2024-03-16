@@ -116,7 +116,7 @@ export default function App() {
     return <div className="animate-spin h-5 w-5 text-white">.</div>;
   }
 
-  if (!signedIn) {
+  if (false) {
     return (
       <div className='flex flex-row gap-4'>
 
