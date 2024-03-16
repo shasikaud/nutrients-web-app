@@ -9,6 +9,13 @@ import { deleteBooks } from "./api/books/delete-books";
 import { Dictionary } from "lodash";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { toast } from 'react-toastify';
+import { use } from 'chai';
+
+/** User APIs */
+import { registerUser } from './api/users';
+
+/** MUI Comps */
+import { Button, TextField, InputAdornment, IconButton } from '@mui/material';
 
 export function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -21,6 +28,11 @@ export default function App() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [signedIn, setSignedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
+
+  /** Register */
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
   useEffect(() => {
     if (Cookies.get('userinfo')) {
@@ -87,13 +99,53 @@ export default function App() {
     setIsLoading(false);
   };
 
+  const handleRegister = async () => {
+    setIsLoading(true);
+    const resp = await registerUser(registerEmail, registerPassword);
+    if (resp.id) {
+      toast.success('User registered successfully');
+    } else {
+      toast.error('User registration failed');
+    }
+    setRegisterEmail('');
+    setRegisterPassword('');
+    setIsLoading(false);
+  }
+
   if (isAuthLoading) {
     return <div className="animate-spin h-5 w-5 text-white">.</div>;
   }
 
   if (!signedIn) {
     return (
-      <div className='flex flex-col gap-4'>
+      <div className='flex flex-row gap-4'>
+
+        {/* Register */}
+        <div className="flex flex-col gap-2 bg-slate-100 p-4 rounded-md">
+          <TextField
+            required
+            id="outlined-required"
+            label="Email"
+            value={registerEmail}
+            onChange={(e) => setRegisterEmail(e.target.value)}
+          />
+          <TextField
+            label="Password"
+            required
+            type={showRegisterPassword ? 'text' : 'password'} 
+            value={registerPassword}
+            onChange={(event) => setRegisterPassword(event.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button variant="contained" onClick={handleRegister}>
+            Register 
+          </Button>
+        </div>
         <button
           className="float-right bg-black bg-opacity-20 p-2 rounded-md text-sm my-3 font-medium text-white"
           onClick={() => { window.location.href = "/auth/login" }}

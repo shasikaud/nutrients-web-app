@@ -5,9 +5,12 @@ import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
 import cors from "cors";
 import { use } from "chai";
+import bcrypt from "bcrypt";
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 const ENV = process.env.NODE_ENV || "prd";
+const JWT_SECRET = process.env.JWT_SECRET || "e28e3a4b-e748-4710-a93c-d01e29b0b641";
 
 const corsOptions ={
   origin:'*', 
@@ -19,6 +22,46 @@ const app = express();
 app.use(cors(corsOptions))
 app.use(express.json());
 if (ENV === 'dev') app.use(express.urlencoded({ extended: true }));
+
+// add a user
+app.post("/app/users/register", async (req, res) => {
+  const { email, password } = req.body;
+  const uuid = uuidv4();
+  if (!email || !password) {
+    return res.status(400).json({ error: "Invalid request" });
+  }
+  const keys = usersCache.keys();
+  for (const key of keys) {
+    const value = usersCache.get(key);
+    if (value.email === email) {
+      return res.status(409).json({ error: "Email already exists" });
+    }
+  }
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const value = { email, password: hashedPassword };
+  usersCache.set(uuid, value, 86400);
+  return res.status(201).json({ id: uuid });
+});
+
+// login
+app.post("/app/users/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: "Invalid request" });
+  }
+  const keys = usersCache.keys();
+  for (const key of keys) {
+    const value = usersCache.get(key);
+    if (value.email === email) {
+      const match = await bcrypt.compare(password, value.password);
+      if (match) {
+        const token = jwt.sign({ id: key }, JWT_SECRET, { expiresIn: '1h' });
+        return res.json({ email, token });
+      }
+    }
+  }
+  return res.status(401).json({ error: "Invalid email or password" });
+});
 
 // add a book - request body should contain a title, status and an author
 app.post("/reading-list/books", (req, res) => {
