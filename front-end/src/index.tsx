@@ -50,7 +50,6 @@ export default function App() {
     if (user) {
       const { email, token } = JSON.parse(user);
       setEmail(email);
-      setToken(token);
       setSignedIn(true);
     }
   }, []);
@@ -88,7 +87,6 @@ export default function App() {
 
   const handleGuestLogin = async () => {
     setIsLoading(true);
-    setEmail('guest');
     setSignedIn(true);
     setIsLoading(false);
   }
@@ -111,6 +109,14 @@ export default function App() {
   const protein = items.reduce((acc, item) => acc + foodItems.find((food) => food.key === item).protein, 0);
   const carbs = items.reduce((acc, item) => acc + foodItems.find((food) => food.key === item).carbs, 0);
   const fat = items.reduce((acc, item) => acc + foodItems.find((food) => food.key === item).fat, 0);
+
+  const saveCalculation = () => {
+    if (!email) {
+      toast.error('Please login to save calculation');
+      return;
+    }
+    // Save calculation
+  }
 
   if (isLoading) {
     return <div className="animate-spin h-5 w-5 text-white">.</div>;
@@ -198,7 +204,7 @@ export default function App() {
       {/* Navbar */}
       <nav className="flex flex-row justify-between bg-slate-100 px-8 py-4">
         <div className="flex justify-between items-center">
-          <p className='text-lg'>Hello <span className='font-bold text-2xl'>{email}</span></p>
+          <p className='text-lg'>Hello <span className='font-bold text-2xl'>{email || 'Guest'}</span></p>
         </div>
         <Button variant="contained" color="error" onClick={handleLogout}>
           Logout 
@@ -207,6 +213,8 @@ export default function App() {
 
       {/* Calculator */}
       <div className="flex flex-col gap-2 p-4 items-center">
+
+        <h1 className='font-bold text-3xl text-center text-white'>Macro Nutrients Calculator App</h1>
 
         <div className='flex flex-col gap-2 border-2 p-6 w-2/3'>
           <p className='text-lg text-center text-white'>Select Food Item</p>
@@ -257,6 +265,13 @@ export default function App() {
             </Paper>
           </div>
         )}
+
+        {/* Save Calculation History */}
+        <div className='flex flex-row justify-center gap-2 border-2 p-6 w-2/3'>
+          <Button variant="contained" color="info" onClick={saveCalculation}>
+            Save Calculation
+          </Button>
+        </div>
 
       </div>
 
