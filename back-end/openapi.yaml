@@ -1,9 +1,8 @@
 openapi: 3.0.3
 info:
-  title: Choreo Sample - Book List - Nodejs REST API Service
+  title: Nutrients Calculator REST API Service
   description: >-
-    This is a sample API specification for a simple reading list application with in-memory cache
-    written in Nodejs
+    This is a REST API service that provides nutrient information for a given food item.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -14,16 +13,16 @@ externalDocs:
 servers:
   - url: http://localhost:8080
 tags:
-  - name: books
-    description: In-memory book list cache API
+  - name: nutrients
+    description: nutrients calculator app
 paths:
-  /books:
-    summary: List all books
+  /nutrients:
+    summary: List all nutrients
     get:
-      summary: List all books
-      operationId: ListAllBooks
+      summary: List all nutrients
+      operationId: ListAllnutrients
       tags:
-        - books
+        - nutrients
       responses:
         "200":
           description: Successful operation
@@ -32,15 +31,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/StringArray"
     post:
-      summary: Insert a new book
-      operationId: SetNewBook
+      summary: Insert a new calculation
+      operationId: SetNewCalculation
       responses:
         "200":
           description: Successful operation
         "400":
           description: Invalid request body
       tags:
-        - books
+        - nutrients
       requestBody:
         content:
           application/json:
@@ -81,17 +80,17 @@ paths:
             schema:
               $ref: "#/components/schemas/User"
 
-  /books/{uuid}:
-    summary: Get book by UUID
+  /nutrients/{uuid}:
+    summary: Get calculation by UUID
     get:
       tags:
-        - books
-      summary: Get book by UUID
-      operationId: GetBookByUUID
+        - nutrients
+      summary: Get calculation by UUID
+      operationId: GetcalculationByUUID
       parameters:
         - name: uuid
           in: path
-          description: UUID of book to return
+          description: UUID of calculation to return
           required: true
           schema:
             type: string
@@ -106,14 +105,14 @@ paths:
           description: UUID not found
     delete:
       tags:
-        - books
-      summary: Delete book by UUID
-      description: Deletes a single book based on the UUID supplied
-      operationId: DeleteBookByUUID
+        - nutrients
+      summary: Delete calculation by UUID
+      description: Deletes a single calculation based on the UUID supplied
+      operationId: DeletecalculationByUUID
       parameters:
         - name: uuid
           in: path
-          description: UUID of book to delete
+          description: UUID of calculation to delete
           required: true
           schema:
             type: string
@@ -124,14 +123,14 @@ paths:
           description: ISBN not found
     put:
       tags:
-        - books
-      summary: Update book status by UUID
-      description: Updates the status of the book based on the UUID supplied
-      operationId: UpdateBookStatusByUUID
+        - nutrients
+      summary: Update calculation status by UUID
+      description: Updates the status of the calculation based on the UUID supplied
+      operationId: UpdatenutrientstatusByUUID
       parameters:
         - name: uuid
           in: path
-          description: UUID of book to update
+          description: UUID of calculation to update
           required: true
           schema:
             type: string
